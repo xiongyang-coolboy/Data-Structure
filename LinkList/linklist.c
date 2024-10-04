@@ -1,7 +1,7 @@
 /*
  * @Author: Mr.Xiong
  * @Date: 2023-11-27 08:50:57
- * @LastEditTime: 2023-11-30 08:50:06
+ * @LastEditTime: 2024-08-31 21:30:39
  * @LastEditors: Mr.Xiong
  * @Description: 
  * @FilePath: /Data-Structure/LinkList/linklist.c
@@ -20,7 +20,7 @@ struct linklist *list_new ()
 
     if(new != NULL)
     {
-        kal_memset(new,0,sizeof(struct linklist ));
+      memset(new,0,sizeof(struct linklist ));
     }
   return new;
 }
@@ -29,14 +29,13 @@ struct linklist *list_create(list_cmp_cb_t cmp, list_del_cb_t del)
 {
   struct linklist *new;
 
-
   new = (struct linklist *)malloc(sizeof(struct linklist));
 
   if(NULL == new)
   {
   	return NULL;
   }
-   kal_memset(new,0,sizeof(struct linklist ));
+   memset(new,0,sizeof(struct linklist ));
 
   new->cmp = cmp;
   new->del = del;
@@ -58,7 +57,7 @@ listnode_new ()
 {
       struct listnode *node;
       node = (struct listnode *)malloc(sizeof(struct listnode));
-      node?  kal_memset(node,0,sizeof(struct listnode )):NULL;
+      node?  memset(node,0,sizeof(struct listnode )):NULL;
 
   return node;
 }
@@ -436,6 +435,9 @@ list_pointer_prev(list_pointer_node_t* p_node)
 {
     return p_node->p_prev->p_prev->p_next;
 }
+
+
+# if 0
 /*
  * ************************  single-linked List   ***************************
 */
@@ -446,7 +448,7 @@ struct slist_s *slist_new()
     new = (struct slist_s *)malloc(sizeof(struct slist_s));
     if (new != NULL)
     {
-        kal_memset(new, 0, sizeof(struct slist_s ));
+        memset(new, 0, sizeof(struct slist_s ));
     }
     return new;
 
@@ -580,3 +582,4 @@ void slist_delete_all_node (struct slist_s * slist)
     return ;
 }
 
+#endif

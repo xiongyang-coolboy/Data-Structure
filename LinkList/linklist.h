@@ -24,7 +24,8 @@
 /*
  * ************************  Double-linked List   ***************************
  */
-typedef void (*list_del_cb_t) (void *val);
+/*定义删除操作和比较操作的函数指针，具体实现由用户自定义*/
+typedef void (*list_del_cb_t) (void *val); 
 typedef int32_t (*list_cmp_cb_t) (void *val1, void *val2);
 
 /**
