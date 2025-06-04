@@ -46,15 +46,50 @@ int32_t ifAdd(tIfInfo *pIf)
     return OK;
 }
 
-int32_t ifRead()
+int32_t ifReadAll()
 {
     listnode_t *node = NULL;
     tIfInfo *pIf = NULL;
 
     LIST_LOOP(globalData.ifList, pIf, node)
     {
-        printf("ifIndex is %u, if linkstate is %d", pIf->ifIndex, pIf->linkState);
+        printf("ifIndex is %u, if linkstate is %d\n", pIf->ifIndex, pIf->linkState);
     }
+
+    return OK;
+}
+
+/**
+ * @func: ifDelNode
+ * @description:  删除单个结点
+ * @param {tIfInfo} *pIf
+ * @return int32_t
+ * @author: Mr.Xiong
+ */
+int32_t ifDelNode(tIfInfo *pIf)
+{
+    listnode_delete(globalData.ifList, pIf);
+    free(pIf);
+    pIf = NULL;
+
+    return OK;
+}
+
+/*删除所有结点*/
+int32_t ifDelAllNode()
+{
+    listnode_t *node = NULL;
+    listnode_t *nextNode = NULL;
+    tIfInfo *pIf = NULL;
+
+    LIST_LOOP_DEL(globalData.ifList, pIf, node, nextNode)
+    {
+        listnode_delete_node(globalData.ifList, node);
+        free(pIf);
+        pIf = NULL;
+    }
+
+    return OK;
 }
 
 /*curd操作句柄*/
@@ -62,7 +97,7 @@ int32_t ifHandle(tIfInfo *pIf, IF_OPER_TYPE_E operType)
 {
     if (NULL == pIf)
     {
-        return;
+        return ERROR;
     }
 
     switch (operType)
@@ -74,10 +109,9 @@ int32_t ifHandle(tIfInfo *pIf, IF_OPER_TYPE_E operType)
             /* code */
             break;
         case IF_READ:
-            ifRead();
             break;
         case IF_DELETE:
-            /* code */
+            ifDelNode(pIf);
             break;
         default:
             break;
@@ -116,13 +150,26 @@ int main(int argc, char const *argv[])
             return ERROR;
         }
 
-        pIf->ifIndex = rand(); 
+        pIf->ifIndex = rand()%200; 
         pIf->linkState = rand()%2 + 1;
 
         ifHandle(pIf, IF_CREATE);
     }
 
-    ifHandle(pIf, IF_READ);
+    printf("the linlist has %d node.", globalData.ifList->count);
+
+    /*遍历操作*/
+    ifReadAll();
+    /*删除操作*/
+    ifDelAllNode();
+
+    /*释放链表*/
+    if (0 == LISTCOUNT(globalData.ifList))
+    {
+        list_delete(globalData.ifList);
+        printf("delete linklist\n");
+        globalData.ifList = NULL;
+    }
 
     return 0;
 }
