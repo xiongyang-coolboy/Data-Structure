@@ -1,8 +1,6 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdbool.h>
-#include "linklist.h"
+#include "avl_tree.h"
 
 /*简单定义端口信息*/
 typedef struct
@@ -23,7 +21,7 @@ typedef enum
 
 typedef struct
 {
-    linklist_t *ifList;
+    avl_tree_t *ifTree;
 }tGLobalData;
 
 tGLobalData globalData;
@@ -33,29 +31,36 @@ tGLobalData globalData;
 
 int32_t ifAdd(tIfInfo *pIf)
 {
-    listnode_t *listnode = NULL;
-    /*直接尾插*/
-    // listnode = (globalData.ifList, pIf);
-    /*用注册的cmp比较函数，进行有序排列*/
-    listnode = listnode_add_sort(globalData.ifList, pIf);
-    if (NULL == listnode)
+    avl_insert(globalData.ifTree, pIf);
+    return OK;
+}
+
+int32_t printNode(tIfInfo *pIf, void *data) 
+{
+    if (NULL == pIf)
     {
         return ERROR;
     }
 
-    return OK;
+    printf("ifIndex is %u, if linkstate is %d\n", pIf->ifIndex, pIf->linkState);
+
+    return 0; // 继续遍历
 }
 
 int32_t ifReadAll()
-{
-    listnode_t *node = NULL;
+{   
+    avl_node_t *pNode = NULL;
     tIfInfo *pIf = NULL;
 
-    LIST_LOOP(globalData.ifList, pIf, node)
+#if 0
+    /*遍历*/
+    AVL_TREE_LOOP(globalData.ifTree, pIf, pNode)
     {
         printf("ifIndex is %u, if linkstate is %d\n", pIf->ifIndex, pIf->linkState);
-    }
+    }     
+#endif
 
+    avl_traverse(globalData.ifTree, (avl_traversal_fn)printNode, NULL);
     return OK;
 }
 
@@ -68,7 +73,7 @@ int32_t ifReadAll()
  */
 int32_t ifDelNode(tIfInfo *pIf)
 {
-    listnode_delete(globalData.ifList, pIf);
+    avl_remove(globalData.ifTree, pIf);
     free(pIf);
     pIf = NULL;
 
@@ -78,13 +83,12 @@ int32_t ifDelNode(tIfInfo *pIf)
 /*删除所有结点*/
 int32_t ifDelAllNode()
 {
-    listnode_t *node = NULL;
-    listnode_t *nextNode = NULL;
     tIfInfo *pIf = NULL;
+    avl_node_t *pNode = NULL;
 
-    LIST_LOOP_DEL(globalData.ifList, pIf, node, nextNode)
+    AVL_LOOP_DEL(globalData.ifTree, pIf, pNode)
     {
-        listnode_delete_node(globalData.ifList, node);
+        avl_remove(globalData.ifTree, pIf);
         free(pIf);
         pIf = NULL;
     }
@@ -120,6 +124,14 @@ int32_t ifHandle(tIfInfo *pIf, IF_OPER_TYPE_E operType)
     return OK;
 }
 
+/**
+ * @func: 
+ * @description: 根据端口索引进行排序
+ * @param {void} *data1
+ * @param {void} *data2
+ * @return {*}
+ * @author: Mr.Xiong
+ */
 int32_t if_index_cmp(void *data1, void *data2)
 {
     tIfInfo *ifInfoData1 = NULL;
@@ -133,8 +145,6 @@ int32_t if_index_cmp(void *data1, void *data2)
 
     ifInfoData1 = (tIfInfo *)data1;
     ifInfoData2 = (tIfInfo *)data2;
-    /*此处存在bug, memcmp适用于单字节比较，对于整型数据来说，需要整体数据判断大小*/
-    // return memcmp(&ifInfoData1->ifIndex, &ifInfoData2->ifIndex, sizeof(uint32_t));
 
     if (ifInfoData1->ifIndex > ifInfoData2->ifIndex)
     {
@@ -156,13 +166,19 @@ int main(int argc, char const *argv[])
 {
     tIfInfo *pIf = NULL;
 
-    globalData.ifList = list_create(if_index_cmp, NULL);
+    /*创建树*/
+    if (avl_create(&globalData.ifTree, 0, if_index_cmp) < 0)
+    {
+        printf("Create IfTree failed.");
+        return ERROR;
+    }
 
     for(int i = 0; i < 50; i++)
     {
         pIf = (tIfInfo *)malloc(sizeof(tIfInfo));
         if (NULL == pIf)
         {
+            printf("malloc interface node failed.");
             return ERROR;
         }
 
@@ -172,7 +188,7 @@ int main(int argc, char const *argv[])
         ifHandle(pIf, IF_CREATE);
     }
 
-    printf("the linlist has %d node.", globalData.ifList->count);
+    printf("the Tree has %d node.", globalData.ifTree->count);
 
     /*遍历操作*/
     ifReadAll();
@@ -180,11 +196,11 @@ int main(int argc, char const *argv[])
     ifDelAllNode();
 
     /*释放链表*/
-    if (0 == LISTCOUNT(globalData.ifList))
+    if (0 == AVL_COUNT(globalData.ifTree))
     {
-        list_delete(globalData.ifList);
-        printf("delete linklist\n");
-        globalData.ifList = NULL;
+        avl_tree_free(&globalData.ifTree, NULL);
+        printf("delete Tree\n");
+        globalData.ifTree = NULL;
     }
 
     return 0;
